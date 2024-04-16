@@ -1,9 +1,8 @@
 
-INV_WIDTH, INV_HEIGHT = 353, 333
+INV_WIDTH, INV_HEIGHT = 352, 332
 GRID_WIDTH, GRID_HEIGHT = 36, 36
 
 grid_info = {
-    #  start number, total grid number, shape, start position
     'inv-1': (0, 9, (1, 9), (14, 281), (338, 317)),
     'inv-2': (9, 27, (3, 9), (14, 165), (338, 273)),
     'craft': (36, 9, (3, 3), (57, 31), (165, 139)),

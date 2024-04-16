@@ -3,6 +3,8 @@ import sys
 import pygame
 from pygame.locals import *
 
+from macvar import dir_ego
+
 from coordinate import (
     INV_WIDTH, INV_HEIGHT,
     GRID_WIDTH, GRID_HEIGHT,
@@ -10,7 +12,6 @@ from coordinate import (
     grid_num2pos,
 )
 
-dir_ego = '/data1/houjinbing/project/ego'
 
 # 初始化Pygame
 pygame.init()
