@@ -35,6 +35,7 @@ cursor_image = pygame.image.load(f"{dir_ego}/mygame/custom_cursor.png")
 cursor_image = pygame.transform.scale(cursor_image, (20, 12)) 
 cursor_rect = cursor_image.get_rect()
 
+groups_cursor = pygame.sprite.Group()
 
 ''' 动态精灵 '''
 class Cursor(pygame.sprite.Sprite):
@@ -45,11 +46,12 @@ class Cursor(pygame.sprite.Sprite):
         self.surf = pygame.transform.scale(cursor_image, (CURSOR_WIDTH, CURSOR_HEIGHT)) 
         self.rect = self.surf.get_rect()
 
-        self.pos = vec((10, 385))
+        self.pos = vec((WIDTH // 2, HEIGHT // 2))
         self.vel = vec(0, 0)
         self.acc = vec(0, 0)
 
         self.key_state = {K_p: False}
+        self.drag_on = False
 
     def move(self):
         pressed_key = pygame.key.get_pressed()
@@ -82,25 +84,29 @@ class Cursor(pygame.sprite.Sprite):
         self.rect.center = self.pos
 
     def attach(self, inv_data, groups_item):
+
+        vx, vy = self.pos.x - CURSOR_WIDTH / 2, self.pos.y - CURSOR_HEIGHT / 2
+
         pressed_key = pygame.key.get_pressed()
         if pressed_key[K_p]:
             self.key_state[K_p] = True
         elif self.key_state[K_p]:
-            num = pos2grid_num(self.pos.x - inv_x, self.pos.y - inv_y)
+            num = pos2grid_num(vx - inv_x, vy - inv_y)
             print(f'key up p, num: {num}, x: {self.pos.x}, y: {self.pos.y}')
             if num is not None:
                 if num in inv_data:
                     for entity in groups_item:
-                        if entity.id == inv_data[num]:
+                        if not self.drag_on and entity.id == inv_data[num]:
                             entity.drag(num, inv_data)
-                            break
+                            self.drag_on = True
+                            break    
                 else:
                     for entity in groups_item:
                         if entity.drag_on:
                             entity.put(num, inv_data)
+                            self.drag_on = False
                             break
             self.key_state[K_p] = False
-
 
 
 ''' 静态精灵 '''
@@ -111,6 +117,7 @@ class Inventory(pygame.sprite.Sprite):
         cursor_image = pygame.image.load(f"{dir_ego}/mygame/Inventory3_3.png")
         self.surf = cursor_image
         self.rect = self.surf.get_rect(center=(WIDTH/2, HEIGHT/2))
+
 
 class Item(pygame.sprite.Sprite):
 
@@ -169,7 +176,6 @@ for k, v in inv_data.items():
     groups_item.add(sp)
 
 while True:
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -181,7 +187,6 @@ while True:
         topleft = cursor_sprite.pos - vec(CURSOR_WIDTH, CURSOR_HEIGHT) // 2
         entity.update_rect(topleft.x, topleft.y)
     
-
     screen.fill((168, 168, 168))
     for entity in groups_static:
         screen.blit(entity.surf, entity.rect)
@@ -192,3 +197,4 @@ while True:
 
     pygame.display.update()
     FramePerSecond.tick(FPS)
+
