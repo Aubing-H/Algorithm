@@ -32,7 +32,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Minecraft Crafting Interface")
 
 # 加载图像资源
-cursor_image = pygame.image.load(f"{dir_ego}/mygame/custom_cursor.png")
+cursor_image = pygame.image.load(f"{dir_ego}/custom_cursor.png")
 cursor_image = pygame.transform.scale(cursor_image, (20, 12)) 
 cursor_rect = cursor_image.get_rect()
 
@@ -43,7 +43,7 @@ class Cursor(pygame.sprite.Sprite):
 
     def __init__(self) -> None:
         super().__init__()
-        cursor_image = pygame.image.load(f"{dir_ego}/mygame/custom_cursor.png")
+        cursor_image = pygame.image.load(f"{dir_ego}/custom_cursor.png")
         self.surf = pygame.transform.scale(cursor_image, (CURSOR_WIDTH, CURSOR_HEIGHT)) 
         self.rect = self.surf.get_rect()
 
@@ -115,7 +115,7 @@ class Inventory(pygame.sprite.Sprite):
 
     def __init__(self):
         super().__init__()
-        cursor_image = pygame.image.load(f"{dir_ego}/mygame/Inventory3_3.png")
+        cursor_image = pygame.image.load(f"{dir_ego}/Inventory3_3.png")
         self.surf = cursor_image
         self.rect = self.surf.get_rect(center=(WIDTH/2, HEIGHT/2))
 
@@ -130,7 +130,7 @@ class Item(pygame.sprite.Sprite):
         self.grid_num = grid_num
         self.drag_on = False
 
-        item_image = pygame.image.load(f"{dir_ego}/mygame/all_items/{item_name}.png")
+        item_image = pygame.image.load(f"{dir_ego}/all_items/{item_name}.png")
         self.surf = pygame.transform.scale(item_image, (GRID_WIDTH, GRID_HEIGHT)) 
         x, y = grid_num2pos(grid_num, True)
         self.rect = self.surf.get_rect(center=(x + inv_x, y + inv_y))
