@@ -1,3 +1,3 @@
 
 
-dir_ego = '/data1/houjinbing/project/ego'
+dir_ego = r'C:\Users\admin\Desktop\workspace\jungling'

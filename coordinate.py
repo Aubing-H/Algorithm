@@ -1,14 +1,14 @@
 
-INV_WIDTH, INV_HEIGHT = 352, 332
+INV_WIDTH, INV_HEIGHT = 352, 216
 GRID_WIDTH, GRID_HEIGHT = 36, 36
 
 grid_info = {
-    'inv-1': (0, 9, (1, 9), (14, 281), (338, 317)),
-    'inv-2': (9, 27, (3, 9), (14, 165), (338, 273)),
-    'craft': (36, 9, (3, 3), (57, 31), (165, 139)),
-    'resul': (45, 1, (1, 1), (245, 67), (281, 103)),
+    'inv-1': (10, 3, (1, 3), (50, 166), (158, 202)),
+    'inv-2': (13, 3, (1, 3), (194, 166), (302, 202)),
+    'craft': (1, 9, (3, 3), (58, 32), (166, 140)),  # 3x3 x 36x36
+    'resul': (0, 1, (1, 1), (246, 68), (282, 104)),  # 238,60 290,112 52x52
+    'button': {16, 1, (1, 1), (231, 121), (298, 143)}
 }
-
 
 ''' position -> grid number '''
 def pos2grid_num(x, y):
@@ -16,8 +16,11 @@ def pos2grid_num(x, y):
         start_num, total_num, shape, pos_s, pos_e = grid_info[k]
         r_num, c_num = shape
         if pos_s[0] <= x < pos_e[0] and pos_s[1] <= y < pos_e[1]:
-            dc = (x - pos_s[0]) // GRID_WIDTH 
-            dr = (y - pos_s[1]) // GRID_HEIGHT
+            if k == 'button' or k == 'resul':
+                dc = dr = 0
+            else:
+                dc = (x - pos_s[0]) // GRID_WIDTH 
+                dr = (y - pos_s[1]) // GRID_HEIGHT
             return start_num + dr * c_num + dc
     return None
 

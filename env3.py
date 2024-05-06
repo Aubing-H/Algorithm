@@ -1,4 +1,6 @@
 import sys
+import string
+import random
 
 import pygame
 from pygame.locals import *
@@ -18,10 +20,10 @@ pygame.init()
 
 # 设置屏幕尺寸和显示模式
 vec = pygame.math.Vector2
-HEIGHT, WIDTH = 400, 520
+HEIGHT, WIDTH = INV_HEIGHT + 150, INV_WIDTH + 150
 CURSOR_HEIGHT, CURSOR_WIDTH = 20, 12
-ACC, FRIC = 0.5, -0.12
-ACC, FRIC = 1.0, -0.24
+# drag parameters
+ACC, FRIC = 1.0, -0.24  # ACC, FRIC = 0.5, -0.12
 FPS = 60
 
 ''' left top point of inventory image '''
@@ -36,7 +38,11 @@ cursor_image = pygame.image.load(f"{dir_ego}/resources/custom_cursor.png")
 cursor_image = pygame.transform.scale(cursor_image, (20, 12)) 
 cursor_rect = cursor_image.get_rect()
 
-groups_cursor = pygame.sprite.Group()
+
+def get_action():
+    pressed_key = pygame.key.get_pressed()
+    pass
+
 
 ''' 动态精灵 '''
 class Cursor(pygame.sprite.Sprite):
@@ -122,9 +128,9 @@ class Inventory(pygame.sprite.Sprite):
 
 class Item(pygame.sprite.Sprite):
 
-    def __init__(self, item_name, grid_num):
+    def __init__(self, item_name):
         super().__init__()
-        self.id = f'{item_name}-{grid_num}'
+        self.id = ''.join(random.sample(string.ascii_letters))
         self.item_name = item_name
 
         self.grid_num = grid_num
