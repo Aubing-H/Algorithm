@@ -12,6 +12,7 @@ from coordinate import (
     GRID_WIDTH, GRID_HEIGHT,
     pos2grid_num,
     grid_num2pos,
+    itemname2gridnum,
 )
 
 
@@ -39,9 +40,36 @@ cursor_image = pygame.transform.scale(cursor_image, (20, 12))
 cursor_rect = cursor_image.get_rect()
 
 
-def get_action():
-    pressed_key = pygame.key.get_pressed()
-    pass
+class ActionHolder:
+
+    def __init__(self):
+        self.store_key = {K_p: False}
+        pass
+
+    def get_action(self, fmt='dict'):
+        action = {'accx': 0, 'accy': 0, 'drag': 0}
+        pressed_key = pygame.key.get_pressed()
+        # action-drag
+        if pressed_key[K_p]:
+            if not self.store_key[K_p]:
+                ''' jump True '''
+                action['drag'] = 1
+        # action-accx
+        if pressed_key[K_LEFT] and not pressed_key[K_RIGHT]:
+            action['accx'] = -1
+        elif not pressed_key[K_LEFT] and pressed_key[K_RIGHT]:
+            action['accx'] = 1
+        # action-accy
+        if pressed_key[K_UP] and not pressed_key[K_DOWN]:
+            action['accy'] = -1
+        elif not pressed_key[K_UP] and pressed_key[K_DOWN]:
+            action['accy'] = 1
+        
+        self.store_key[K_p] = True if pressed_key[K_p] else False
+        if fmt == 'dict':
+            return action
+        elif fmt == 'list':
+            return [action['accx'], action['accy'], action['drag']]
 
 
 ''' 动态精灵 '''
@@ -57,20 +85,9 @@ class Cursor(pygame.sprite.Sprite):
         self.vel = vec(0, 0)
         self.acc = vec(0, 0)
 
-        self.key_state = {K_p: False}
-        self.drag_on = False
-
-    def move(self):
-        pressed_key = pygame.key.get_pressed()
-        self.acc = vec(0, 0)
-        if pressed_key[K_LEFT]:
-            self.acc.x = -ACC
-        if pressed_key[K_RIGHT]:
-            self.acc.x = ACC
-        if pressed_key[K_UP]:
-            self.acc.y = -ACC
-        if pressed_key[K_DOWN]:
-            self.acc.y = ACC
+    def move(self, action):
+        self.acc.x = action['accx']
+        self.acc.y = action['accy']
 
         # friction 
         self.acc += self.vel * FRIC
@@ -88,32 +105,56 @@ class Cursor(pygame.sprite.Sprite):
         if self.pos.y < 0:
             self.pos.y = HEIGHT
 
-        self.rect.center = self.pos
+        self.rect.center = vec(self.pos.x + CURSOR_WIDTH//2, self.pos.y + CURSOR_HEIGHT//2)
 
-    def attach(self, inv_data, groups_item):
+    def attach(self, action, groups_craft, dragged_sprite):
+        # get grid num if cursor is on grid
+        vx, vy = self.pos.x, self.pos.y
+        num = pos2grid_num(vx - inv_x, vy - inv_y)
 
-        vx, vy = self.pos.x - CURSOR_WIDTH / 2, self.pos.y - CURSOR_HEIGHT / 2
+        if not (action['drag'] and num != None and 0 < num < 16):
+            # debug
+            if action['drag']:
+                print('num', num)
 
-        pressed_key = pygame.key.get_pressed()
-        if pressed_key[K_p]:
-            self.key_state[K_p] = True
-        elif self.key_state[K_p]:
-            num = pos2grid_num(vx - inv_x, vy - inv_y)
+            return dragged_sprite
+    
+        if dragged_sprite == None:
             print(f'key up p, num: {num}, x: {self.pos.x}, y: {self.pos.y}')
-            if num is not None:
-                if num in inv_data:
-                    for entity in groups_item:
-                        if not self.drag_on and entity.id == inv_data[num]:
-                            entity.drag(num, inv_data)
-                            self.drag_on = True
-                            break    
-                else:
-                    for entity in groups_item:
-                        if entity.drag_on:
-                            entity.put(num, inv_data)
-                            self.drag_on = False
-                            break
-            self.key_state[K_p] = False
+            if 0 < num < 10:
+                # drag the item from crafting table
+                for id in groups_craft:
+                    if groups_craft[id].grid_num == num:
+                        dragged_sprite = groups_craft[id]
+                        groups_craft.pop(id)
+                        break
+            elif 10 <= num < 16:
+                # sponse new material and attach to cursor
+                for name in itemname2gridnum:
+                    if itemname2gridnum[name] == num:
+                        print(name)
+                        break
+                dragged_sprite = Item(name)
+        else:
+            if 0 < num < 10:
+                blank = True
+                for id in groups_craft:
+                    if groups_craft[id].grid_num == num:
+                        blank = False
+                        break
+                if blank:
+                    groups_craft[dragged_sprite.id] = dragged_sprite
+                    # update position
+                    x, y = grid_num2pos(num, center=True)
+                    dragged_sprite.update_rect(x + inv_x, y + inv_y)
+                    dragged_sprite = None
+            elif 10 <= num < 16:
+                for name in itemname2gridnum:
+                    if (itemname2gridnum[name] == num and 
+                        dragged_sprite.item_name == name):
+                        dragged_sprite = None
+                        break
+        return dragged_sprite
 
 
 ''' 静态精灵 '''
@@ -130,77 +171,78 @@ class Item(pygame.sprite.Sprite):
 
     def __init__(self, item_name):
         super().__init__()
-        self.id = ''.join(random.sample(string.ascii_letters))
+        self.id = ''.join(random.sample(string.ascii_letters, k=10))
         self.item_name = item_name
+        item_image = pygame.image.load(f"{dir_ego}/resources/{item_name}.png")
+        self.surf = pygame.transform.scale(item_image, (GRID_WIDTH, GRID_HEIGHT))
 
-        self.grid_num = grid_num
-        self.drag_on = False
-
-        item_image = pygame.image.load(f"{dir_ego}/all_items/{item_name}.png")
-        self.surf = pygame.transform.scale(item_image, (GRID_WIDTH, GRID_HEIGHT)) 
-        x, y = grid_num2pos(grid_num, True)
+        if self.item_name in itemname2gridnum:
+            self.grid_num = itemname2gridnum[self.item_name]
+        else:
+            self.grid_num = 0 
+        x, y = grid_num2pos(self.grid_num, True)
         self.rect = self.surf.get_rect(center=(x + inv_x, y + inv_y))
-    
-    def put(self, grid_num, inv_data):
-        if grid_num not in inv_data:
-            self.drag_on = False
-            self.grid_num = grid_num
-            inv_data[grid_num] = self.id
-
-            x, y = grid_num2pos(grid_num, True)
-            self.rect = self.surf.get_rect(center=(x + inv_x, y + inv_y))
-
-    def drag(self, grid_num, inv_data):
-        if grid_num in inv_data:
-            self.drag_on = True
-            self.grid_num = None
-            inv_data.pop(grid_num)
 
     def update_rect(self, x, y):
-        if self.drag_on:
-            self.rect = self.surf.get_rect(center=(x, y))
+        self.rect = self.surf.get_rect(center=(x, y))
 
 
-inv_data = {
-    0: 'oak_planks-0',
-    24: 'stick-24',
-    38: 'diamond-38',
-    45: 'wooden_pickaxe-45',
-}
-
-cursor_sprite = Cursor()
 inv_sprite = Inventory()
-
-groups = pygame.sprite.Group()
-groups.add(cursor_sprite)
 
 groups_static = pygame.sprite.Group()
 groups_static.add(inv_sprite)
+for item_name in itemname2gridnum:
+    sp = Item(item_name)
+    groups_static.add(sp)
 
-groups_item = pygame.sprite.Group()
-for k, v in inv_data.items():
-    sp = Item(v.split('-')[0], k)
-    groups_item.add(sp)
+class SpriteGroup:
+
+    def __init__(self, item_list=[]) -> None:
+        self.group = item_list
+        pass
+
+    def 
+
+
+groups_craft = {}
+
+dragged_sprite = None
+
+cursor_sprite = Cursor()
+
+holder = ActionHolder()
+
 
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+
+    action = holder.get_action()
+    # debug
         
-    cursor_sprite.move()
-    cursor_sprite.attach(inv_data, groups_item)
-    for entity in groups_item:
-        topleft = cursor_sprite.pos - vec(CURSOR_WIDTH, CURSOR_HEIGHT) // 2
-        entity.update_rect(topleft.x, topleft.y)
+    cursor_sprite.move(action)
+    if action['drag']:
+        print(f'x: {cursor_sprite.pos.x}, y: {cursor_sprite.pos.y}')
+
+    dragged_sprite = cursor_sprite.attach(action, groups_craft, dragged_sprite)
+    if dragged_sprite != None:
+        # position align with cursor
+        dragged_sprite.update_rect(cursor_sprite.pos.x - CURSOR_WIDTH//2, 
+                                   cursor_sprite.pos.y - CURSOR_HEIGHT//2)
+
     
     screen.fill((168, 168, 168))
     for entity in groups_static:
         screen.blit(entity.surf, entity.rect)
-    for entity in groups_item:
+    
+    for entity in groups_craft.values():
         screen.blit(entity.surf, entity.rect)
-    for entity in groups:
-        screen.blit(entity.surf, entity.rect)
+        
+    if dragged_sprite != None:
+        screen.blit(dragged_sprite.surf, dragged_sprite.rect)        
+    screen.blit(cursor_sprite.surf, cursor_sprite.rect)
 
     pygame.display.update()
     FramePerSecond.tick(FPS)
