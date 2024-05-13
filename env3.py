@@ -201,8 +201,6 @@ class SpriteGroup:
         self.group = item_list
         pass
 
-    def 
-
 
 groups_craft = {}
 

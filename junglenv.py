@@ -74,6 +74,42 @@ class ActionHolder:
             return [action['accx'], action['accy'], action['drag']]
 
 
+''' 动态精灵 '''
+class Cursor(pygame.sprite.Sprite):
+
+    def __init__(self) -> None:
+        super().__init__()
+        cursor_image = pygame.image.load(f"{dir_ego}/resources/custom_cursor.png")
+        self.surf = pygame.transform.scale(cursor_image, (CURSOR_WIDTH, CURSOR_HEIGHT)) 
+        self.rect = self.surf.get_rect()
+
+        self.pos = vec((WIDTH // 2, HEIGHT // 2))
+        self.vel = vec(0, 0)
+        self.acc = vec(0, 0)
+
+    def move(self, action):
+        self.acc.x = action['accx']
+        self.acc.y = action['accy']
+
+        # friction 
+        self.acc += self.vel * FRIC
+
+        # vecility
+        self.vel += self.acc
+        self.pos += self.vel + 0.5 * self.acc
+
+        if self.pos.x > WIDTH:
+            self.pos.x = 0
+        if self.pos.y > HEIGHT:
+            self.pos.y = 0
+        if self.pos.x < 0:
+            self.pos.x = WIDTH
+        if self.pos.y < 0:
+            self.pos.y = HEIGHT
+
+        self.rect.center = vec(self.pos.x + CURSOR_WIDTH//2, self.pos.y + CURSOR_HEIGHT//2)
+
+
 ''' 静态精灵 '''
 class Inventory(pygame.sprite.Sprite):
 
@@ -123,13 +159,20 @@ class ItemGroup:
     
     def drag_up_inv(self, num):
         self.dragged = Item(num2name[num])
-        
-
 
 
 class JungingEnv:
 
     def __init__(self) -> None:
+        self.cursor = Cursor()
+        self.group = ItemGroup()
+
+        # static images
+        self.groups_static = pygame.sprite.Group()
+        self.groups_static.add(Inventory())
+        for item_name in itemname2gridnum:
+            sp = Item(item_name)
+            self.groups_static.add(sp)
         pass
 
     def reset(self, ):
@@ -143,4 +186,44 @@ class JungingEnv:
                 accy = -1, 0, 1
                 drag = 0, 1 
         '''
+        self.cursor.move(action)
+        vx, vy = self.cursor.pos.x, self.cursor.pos.y
+        num = pos2grid_num(vx - inv_x, vy - inv_y)
+
+        if action['drag'] and num != None and 0 < num < 16:
+            idx = self.group.find_pos(num)
+            
+            pass
+
+        self.render()
         pass
+
+    def drag(self,):
+
+        pass
+
+
+    def render(self, ):
+        screen.fill((168, 168, 168))
+        for entity in self.groups_static:
+            screen.blit(entity.surf, entity.rect)
+        
+        for entity in self.group.values():
+            screen.blit(entity.surf, entity.rect)
+            
+        dragged = self.group.dragged
+        if dragged != None:
+            screen.blit(dragged.surf, dragged.rect)        
+        screen.blit(self.cursor.surf, self.cursor.rect)
+
+        pygame.display.update()
+        FramePerSecond.tick(FPS)
+
+
+class UserModel:
+
+    def __init__(self) -> None:
+        self.env = JungingEnv()
+        self.holder = ActionHolder()  # listen user action
+        pass
+
