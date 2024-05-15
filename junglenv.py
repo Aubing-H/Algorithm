@@ -164,6 +164,10 @@ class ItemGroup:
 class JungingEnv:
 
     def __init__(self) -> None:
+        ''' initialize components:
+                1. cursor
+                2. dynamic icons, including dragged icon
+                3. static icons and background surface '''
         self.cursor = Cursor()
         self.group = ItemGroup()
 
@@ -176,7 +180,7 @@ class JungingEnv:
         pass
 
     def reset(self, ):
-
+        
         pass
 
     def step(self, action):
@@ -188,17 +192,45 @@ class JungingEnv:
         '''
         self.cursor.move(action)
         vx, vy = self.cursor.pos.x, self.cursor.pos.y
+        # position grid num if cursor in grids
         num = pos2grid_num(vx - inv_x, vy - inv_y)
 
+        # cursor hove on grids
         if action['drag'] and num != None and 0 < num < 16:
+            # cursor hove on dynamic icons, return idx of self.group.group
             idx = self.group.find_pos(num)
-            
+            dragged = self.group.dragged
+
+            # case01, not dragged, hover on materials
+            # dragged up
+
+            # case02, dragged, hover on same icon
+            # clear dragged
+
+            # case03, dragged, hover on diff icon
+            # dragged up
+
+            # case04, not dragged, hover on empty table
+            # do nothing
+
+            # case05, not dragged, hover on icon
+            # dragged up, clean icon's grid
+
+            # case06, dragged, hover on empty table
+            # put down, 
+
+            # case06, dragged, hover on same icon
+            # clean icon's grid
+
+            # case07, dragged, hover on diff icon
+            # switch icons
+
             pass
 
         self.render()
         pass
 
-    def drag(self,):
+    def drag_up(self,):
 
         pass
 
