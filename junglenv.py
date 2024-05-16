@@ -139,6 +139,11 @@ class Item(pygame.sprite.Sprite):
     def update_rect(self, x, y):
         self.rect = self.surf.get_rect(center=(x, y))
 
+    def update_pos(self, num):
+        if 0 < num < 10:
+            x, y = grid_num2pos(num, True)
+            self.rect = self.surf.get_rect(center=(x + inv_x, y + inv_y))
+
 
 class ItemGroup:
 
@@ -195,6 +200,10 @@ class JungingEnv:
         # position grid num if cursor in grids
         num = pos2grid_num(vx - inv_x, vy - inv_y)
 
+        if action['drag']:
+            print(f'x: {self.cursor.pos.x}, y: {self.cursor.pos.y}')
+            print(self.group.dragged == None)
+
         # cursor hove on grids
         if action['drag'] and num != None and 0 < num < 16:
             # cursor hove on dynamic icons, return idx of self.group.group
@@ -203,54 +212,76 @@ class JungingEnv:
 
             # case01, not dragged, hover on materials
             # dragged up
+            if dragged == None and 9 < num < 16:
+                self.group.dragged = Item(num2name[num])
 
             # case02, dragged, hover on same icon
             # clear dragged
+            elif dragged != None and num in num2name and \
+                num2name[num] == self.group.dragged.item_name:
+                self.group.dragged = None
 
             # case03, dragged, hover on diff icon
             # dragged up
+            elif dragged != None and num in num2name and \
+                num2name[num] != self.group.group[idx].item_name:
+                self.group.dragged = Item(num2name[num])
+
+            # case05, not dragged, hover on icon
+            # dragged up, clean icon's grid
+            elif dragged == None and idx > -1:
+                self.group.dragged = self.group.group.pop(idx)
+
+            # case06, dragged, hover on empty table
+            # put down, 
+            elif dragged != None and 0 < num < 10 and idx < 0:
+                item_name = self.group.dragged.item_name
+                new_item = Item(item_name)
+                new_item.update_pos(num)
+                self.group.group.append(new_item)
+
+            # case06, dragged, hover on same icon
+            # clean icon's grid
+            elif dragged != None and idx > -1 and \
+                self.group.group[idx].item_name == self.group.dragged.item_name:
+                self.group.group.pop(idx)
+
+            # case07, dragged, hover on diff icon
+            # switch icons
+            elif dragged != None and idx > -1 and \
+                self.group.group[idx].item_name != self.group.dragged.item_name:
+                item_name = self.group.group[idx].item_name
+                self.group.dragged.update_pos(num)
+                self.group.group[idx] = self.group.dragged
+                self.group.dragged = Item(item_name)
 
             # case04, not dragged, hover on empty table
             # do nothing
 
-            # case05, not dragged, hover on icon
-            # dragged up, clean icon's grid
-
-            # case06, dragged, hover on empty table
-            # put down, 
-
-            # case06, dragged, hover on same icon
-            # clean icon's grid
-
-            # case07, dragged, hover on diff icon
-            # switch icons
-
             pass
+
+        if self.group.dragged != None:
+            self.group.dragged.update_rect(
+                self.cursor.pos.x,
+                self.cursor.pos.y
+            )
 
         self.render()
         pass
-
-    def drag_up(self,):
-
-        pass
-
 
     def render(self, ):
         screen.fill((168, 168, 168))
         for entity in self.groups_static:
             screen.blit(entity.surf, entity.rect)
         
-        for entity in self.group.values():
+        for entity in self.group.group:
             screen.blit(entity.surf, entity.rect)
             
         dragged = self.group.dragged
         if dragged != None:
             screen.blit(dragged.surf, dragged.rect)        
         screen.blit(self.cursor.surf, self.cursor.rect)
-
         pygame.display.update()
-        FramePerSecond.tick(FPS)
-
 
 class UserModel:
 
@@ -259,3 +290,20 @@ class UserModel:
         self.holder = ActionHolder()  # listen user action
         pass
 
+    def interact(self, ):
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+            action = self.holder.get_action()
+            self.env.step(action)       
+            FramePerSecond.tick(FPS)
+
+
+
+if __name__ == '__main__':
+
+    model = UserModel()
+    model.interact()
