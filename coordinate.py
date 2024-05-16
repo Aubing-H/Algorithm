@@ -10,6 +10,28 @@ grid_info = {
     'button': {16, 1, (1, 1), (231, 121), (298, 143)}   # 
 }
 
+pattern2name = {
+    '## ##  # ': 'axe',
+    '##  #  # ': 'hoe',
+    ' #  #  # ': 'sword',
+}
+
+recipes = {}
+for color in ['red', 'green', 'blue']:
+    for mater in ['wooden', 'iron', 'diamond']:
+        recipes[f'{color}_{mater}_axe'] = {
+            'plan': [[mater, 0], [mater, 1], [mater, 3], [f'stick-{color}', 4], [f'stick-{color}', 7]],
+            'additions': [0, 1],
+        }
+        recipes[f'{color}_{mater}_hoe'] = {
+            'plan': [[mater, 0], [mater, 1], [f'stick-{color}', 4], [f'stick-{color}', 7]],
+            'additions': [0, 1],
+        }
+        recipes[f'{color}_{mater}_sword'] = {
+            'plan': [[mater, 0], [mater, 3], [f'stick-{color}', 6]],
+            'additions': [0, 1, 2],
+        }
+
 itemname2gridnum = {
     'wooden': 10,
     'iron': 11,

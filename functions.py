@@ -1,11 +1,8 @@
 import json
+import av
 
-
-dir_ego = '/data1/houjinbing/project/ego'
-
-with open(f'{dir_ego}/src/recipes.json') as f:
-    recipes = json.load(f)
-
+# with open(f'{dir_ego}/src/recipes.json') as f:
+#     recipes = json.load(f)
 
 def is_synthesizable(recipes, crafting_table):
     ''' 
@@ -38,24 +35,35 @@ def is_synthesizable(recipes, crafting_table):
         return None   
 
 
-    
+''' input: frame iterator, mp4_video_output_path, (width, height), fps
+    output mp4 video file '''
+def write_video(frames, output_file, wid_height=(640, 360), fps=20,):
+    container = av.open(output_file, mode='w', format='mp4')
+    video_stream = container.add_stream('h264', rate=fps)
+    video_stream.width, video_stream.height = wid_height
+    for frame in frames:
+        cation_frame = av.VideoFrame.from_ndarray(frame, format='rgb24')
+        for packet in video_stream.encode(cation_frame):
+            container.mux(packet)
+    for packet in video_stream.encode():
+        container.mux(packet)
+    container.close()
+
+# def test_cases():
+#     '"light_gray_dye_from_gray_white_dye": {"plan": [["gray_dye", 36]], "additions": [0, 1, 2, 3, 4, 5, 6, 7, 8]},'
+#     cft_tables = [
+#         ({36: 'coal', 39: 'stick',}, 'torch'),
+#         ({42: 'gray_dye'}, 'light_gray_dye_from_gray_white_dye'),  # collide with gray_wool
+#         ({36: 'diamond', 37: 'diamond', 38: 'diamond', 40: 'stick', 43: 'stick'}, 'diamond_pickaxe'),
+#         ({36: 'coal', 39: 'stick', 44: 'coal'}, None),
+#         ({42: 'coal', }, None),
+#         ({36: 'diamond', 40: 'stick', 43: 'stick'}, None),
+#         ({}, None)
+#     ]
+#     for i, item in enumerate(cft_tables):
+#         output = is_synthesizable(recipes, crafting_table=item[0])
+#         print(f'测试-{i+1} 成功' if output == item[1] else f'测试-{i + 1} 失败，输出：{output}，真值：{item[1]}')
 
 
-def test_cases():
-    '"light_gray_dye_from_gray_white_dye": {"plan": [["gray_dye", 36]], "additions": [0, 1, 2, 3, 4, 5, 6, 7, 8]},'
-    cft_tables = [
-        ({36: 'coal', 39: 'stick',}, 'torch'),
-        ({42: 'gray_dye'}, 'light_gray_dye_from_gray_white_dye'),  # collide with gray_wool
-        ({36: 'diamond', 37: 'diamond', 38: 'diamond', 40: 'stick', 43: 'stick'}, 'diamond_pickaxe'),
-        ({36: 'coal', 39: 'stick', 44: 'coal'}, None),
-        ({42: 'coal', }, None),
-        ({36: 'diamond', 40: 'stick', 43: 'stick'}, None),
-        ({}, None)
-    ]
-    for i, item in enumerate(cft_tables):
-        output = is_synthesizable(recipes, crafting_table=item[0])
-        print(f'测试-{i+1} 成功' if output == item[1] else f'测试-{i + 1} 失败，输出：{output}，真值：{item[1]}')
-
-
-if __name__ == '__main__':
-    test_cases()
+# if __name__ == '__main__':
+#     test_cases()

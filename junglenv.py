@@ -13,6 +13,13 @@ from coordinate import (
     pos2grid_num,
     grid_num2pos,
     itemname2gridnum,
+    pattern2name,
+    recipes,
+)
+
+from functions import (
+    is_synthesizable,
+    write_video,
 )
 
 num2name = dict(zip(itemname2gridnum.values(), itemname2gridnum.keys()))
@@ -27,7 +34,7 @@ HEIGHT, WIDTH = INV_HEIGHT + 150, INV_WIDTH + 150
 CURSOR_HEIGHT, CURSOR_WIDTH = 20, 12
 # drag parameters
 ACC, FRIC = 1.0, -0.24  # ACC, FRIC = 0.5, -0.12
-FPS = 60
+FPS = 20
 
 ''' left top point of inventory image '''
 inv_x, inv_y = (WIDTH - INV_WIDTH) // 2, (HEIGHT - INV_HEIGHT) // 2
@@ -122,7 +129,7 @@ class Inventory(pygame.sprite.Sprite):
 
 class Item(pygame.sprite.Sprite):
 
-    def __init__(self, item_name):
+    def __init__(self, item_name, grid_num=0):
         super().__init__()
         self.id = ''.join(random.sample(string.ascii_letters, k=10))
         self.item_name = item_name
@@ -132,7 +139,7 @@ class Item(pygame.sprite.Sprite):
         if self.item_name in itemname2gridnum:
             self.grid_num = itemname2gridnum[self.item_name]
         else:
-            self.grid_num = 0 
+            self.grid_num = grid_num
         x, y = grid_num2pos(self.grid_num, True)
         self.rect = self.surf.get_rect(center=(x + inv_x, y + inv_y))
 
@@ -140,7 +147,7 @@ class Item(pygame.sprite.Sprite):
         self.rect = self.surf.get_rect(center=(x, y))
 
     def update_pos(self, num):
-        if 0 < num < 10:
+        if 0 <= num < 10:
             self.grid_num = num
             x, y = grid_num2pos(num, True)
             self.rect = self.surf.get_rect(center=(x + inv_x, y + inv_y))
@@ -160,12 +167,24 @@ class ItemGroup:
         return -1
     
     def check_syn(self,):
-        ''' check pattern '''
+        # ''' check pattern '''
+        # pat = [None] * 9
+        # for item in self.group:
+        #     pat[item.grid_num - 1] = item
+        # patstr = ''.join([' ' if item == None else '#' for item in pat])
+        # if patstr not in pattern2name:
+        #     return None
+        # pat_name = pattern2name[patstr]
 
-        ''' check color '''
+        # ''' check color '''
+        # if pat_name == 'axe' or pat_name == 'hoe':
+        #     if pat[4].item_name != pat[7].item_name:
+        #         return None
+        # if pat[7].item_name not in ['']
 
-        ''' check material '''
-        pass
+        # ''' check material '''
+        cftable = {item.grid_num - 1: item.item_name for item in self.group}
+        return is_synthesizable(recipes, cftable)
 
 
 class JungingEnv:
@@ -273,20 +292,24 @@ class JungingEnv:
         # synthesize
         elif action['drag'] and num == 16:
             ''' check synthe, show new item '''
-
+            syn_name = self.group.check_syn()
+            if syn_name != None:
+                self.group.synthe = Item(syn_name, 0)
             pass
 
         elif action['drag'] and num == 0:
             ''' clear result and table '''
+            self.group.group = []
+            self.group.synthe = None
 
         if self.group.dragged != None:
             self.group.dragged.update_rect(
                 self.cursor.pos.x,
                 self.cursor.pos.y
             )
-
         self.render()
-        pass
+        rgb = pygame.surfarray.array3d(screen)
+        return rgb.swapaxes(1, 0)
 
     def render(self, ):
         screen.fill((168, 168, 168))
@@ -298,31 +321,45 @@ class JungingEnv:
             
         dragged = self.group.dragged
         if dragged != None:
-            screen.blit(dragged.surf, dragged.rect)        
+            screen.blit(dragged.surf, dragged.rect) 
+        syned = self.group.synthe
+        if syned != None:
+            screen.blit(syned.surf, syned.rect)        
         screen.blit(self.cursor.surf, self.cursor.rect)
         pygame.display.update()
+        
 
 class UserModel:
 
     def __init__(self) -> None:
         self.env = JungingEnv()
         self.holder = ActionHolder()  # listen user action
+        self.frames = []
         pass
 
     def interact(self, ):
 
         while True:
+            qt = False
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    sys.exit()
+                    qt = True
+                    break
+            if qt:
+                break
             action = self.holder.get_action()
-            self.env.step(action)       
+            rgb = self.env.step(action)       
+            self.frames.append(rgb)
             FramePerSecond.tick(FPS)
-
+            
+    def save_video(self, name):
+        video_path = f'{dir_ego}/outputs/{name}'
+        write_video(self.frames, video_path, (WIDTH, HEIGHT), FPS * 2)
 
 
 if __name__ == '__main__':
 
     model = UserModel()
     model.interact()
+    model.save_video('test0516.mp4')
