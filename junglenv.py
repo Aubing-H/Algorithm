@@ -141,6 +141,7 @@ class Item(pygame.sprite.Sprite):
 
     def update_pos(self, num):
         if 0 < num < 10:
+            self.grid_num = num
             x, y = grid_num2pos(num, True)
             self.rect = self.surf.get_rect(center=(x + inv_x, y + inv_y))
 
@@ -150,6 +151,7 @@ class ItemGroup:
     def __init__(self):
         self.group = []
         self.dragged = None
+        self.synthe = None
 
     def find_pos(self, num):
         for i, item in enumerate(self.group):
@@ -157,13 +159,13 @@ class ItemGroup:
                 return i
         return -1
     
-    def drag_up_table(self, num):
-        pos = self.find_pos(num)
-        if pos != -1:
-            self.dragged = self.group.pop(pos)
-    
-    def drag_up_inv(self, num):
-        self.dragged = Item(num2name[num])
+    def check_syn(self,):
+        ''' check pattern '''
+
+        ''' check color '''
+
+        ''' check material '''
+        pass
 
 
 class JungingEnv:
@@ -202,54 +204,62 @@ class JungingEnv:
 
         if action['drag']:
             print(f'x: {self.cursor.pos.x}, y: {self.cursor.pos.y}')
-            print(self.group.dragged == None)
+            
 
         # cursor hove on grids
         if action['drag'] and num != None and 0 < num < 16:
             # cursor hove on dynamic icons, return idx of self.group.group
             idx = self.group.find_pos(num)
             dragged = self.group.dragged
+            print(f'drag none: {dragged == None}, idx: {idx}, num: {num}, group-len: {len(self.group.group)}')
 
             # case01, not dragged, hover on materials
-            # dragged up
+            # dragged up, <- done ->
             if dragged == None and 9 < num < 16:
+                print('case01')
                 self.group.dragged = Item(num2name[num])
 
-            # case02, dragged, hover on same icon
-            # clear dragged
+            # case02, dragged, hover on same material
+            # clear dragged, <- done ->
             elif dragged != None and num in num2name and \
                 num2name[num] == self.group.dragged.item_name:
+                print('case02')
                 self.group.dragged = None
 
-            # case03, dragged, hover on diff icon
-            # dragged up
+            # case03, dragged, hover on diff material
+            # dragged up, <- done ->
             elif dragged != None and num in num2name and \
-                num2name[num] != self.group.group[idx].item_name:
+                num2name[num] != self.group.dragged.item_name:
+                print('case03')
                 self.group.dragged = Item(num2name[num])
 
             # case05, not dragged, hover on icon
-            # dragged up, clean icon's grid
+            # dragged up, clean icon's grid, <- done ->
             elif dragged == None and idx > -1:
+                print('case05')
                 self.group.dragged = self.group.group.pop(idx)
 
             # case06, dragged, hover on empty table
-            # put down, 
+            # put down, <- done ->
             elif dragged != None and 0 < num < 10 and idx < 0:
+                print('case06')
                 item_name = self.group.dragged.item_name
                 new_item = Item(item_name)
                 new_item.update_pos(num)
                 self.group.group.append(new_item)
 
-            # case06, dragged, hover on same icon
-            # clean icon's grid
+            # case07, dragged, hover on same icon
+            # clean icon's grid, <- bug ->
             elif dragged != None and idx > -1 and \
                 self.group.group[idx].item_name == self.group.dragged.item_name:
+                print('case07')
                 self.group.group.pop(idx)
 
-            # case07, dragged, hover on diff icon
-            # switch icons
+            # case08, dragged, hover on diff icon
+            # switch icons, <- bug ->
             elif dragged != None and idx > -1 and \
                 self.group.group[idx].item_name != self.group.dragged.item_name:
+                print('case08')
                 item_name = self.group.group[idx].item_name
                 self.group.dragged.update_pos(num)
                 self.group.group[idx] = self.group.dragged
@@ -259,6 +269,15 @@ class JungingEnv:
             # do nothing
 
             pass
+
+        # synthesize
+        elif action['drag'] and num == 16:
+            ''' check synthe, show new item '''
+
+            pass
+
+        elif action['drag'] and num == 0:
+            ''' clear result and table '''
 
         if self.group.dragged != None:
             self.group.dragged.update_rect(
