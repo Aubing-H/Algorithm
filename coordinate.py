@@ -3,11 +3,12 @@ INV_WIDTH, INV_HEIGHT = 352, 216
 GRID_WIDTH, GRID_HEIGHT = 36, 36
 
 grid_info = {
-    'inv-1': (10, 3, (1, 3), (50, 166), (158, 202)),
-    'inv-2': (13, 3, (1, 3), (194, 166), (302, 202)),
+    'inv-1': (10, 3, (1, 3), (50, 202), (158, 238)),  # 50,202, 158,238
+    'inv-2': (13, 3, (1, 3), (194, 202), (302, 238)),
+    'inv-3': (17, 9, (1, 9), (14, 166), (338, 202)),
     'craft': (1, 9, (3, 3), (58, 32), (166, 140)),  # 3x3 x 36x36
     'resul': (0, 1, (1, 1), (246, 68), (282, 104)),  # 238,60 290,112 52x52
-    'button': {16, 1, (1, 1), (231, 121), (298, 143)}   # 
+    'button': {16, 1, (1, 1), (231, 121), (298, 143)}   
 }
 
 pattern2name = {
@@ -16,7 +17,33 @@ pattern2name = {
     ' #  #  # ': 'sword',
 }
 
-recipes = {}
+recipes = {
+    'wooden': {
+        'plan': [['log', 0]],
+        'additions': [i for i in range(9)],
+    },
+    'diamond': {
+        'plan': [['diamond_ore', 0]],
+        'additions': [i for i in range(9)],
+    },
+    'iron': {
+        'plan': [['iron_ore', 0]],
+        'additions': [i for i in range(9)],
+    },
+    'red_stick': {
+        'plan': [['wooden', 0], ['wooden', 3], ['red_dye', 4]],
+        'additions': [0, 1, 3, 4],
+    },
+    'green_stick': {
+        'plan': [['wooden', 0], ['wooden', 3], ['green_dye', 4]],
+        'additions': [0, 1, 3, 4],
+    },
+    'blue_stick': {
+        'plan': [['wooden', 0], ['wooden', 3], ['blue_dye', 4]],
+        'additions': [0, 1, 3, 4],
+    },
+}
+
 for color in ['red', 'green', 'blue']:
     for mater in ['wooden', 'iron', 'diamond']:
         recipes[f'{color}_{mater}_axe'] = {
