@@ -24,12 +24,12 @@ def is_synthesizable(recipes, crafting_table):
     输出：
         如果不能合成物品，输出 None，否则输出对应的物品名称。'''
     flag = 0
-    for k,v in recipes.items():
-        rcp_table = {pair[1]:pair[0] for pair in v['plan']}
+    for k, v in recipes.items():
         for i in range(len(v['additions'])):
-            rcp_table = {rcp_k+v['additions'][i]:rcp_v for rcp_k,rcp_v in rcp_table.items()}
+            rcp_table = {
+                pair[1] + v['additions'][i]: pair[0] for pair in v['plan']
+            }
             if rcp_table == crafting_table:
-                
                 return k
     if not flag:
         return None   

@@ -147,7 +147,7 @@ class Item(pygame.sprite.Sprite):
         self.rect = self.surf.get_rect(center=(x, y))
 
     def update_pos(self, num):
-        if 0 <= num < 10:
+        if 0 <= num < 10 or 16 < num < 26:
             self.grid_num = num
             x, y = grid_num2pos(num, True)
             self.rect = self.surf.get_rect(center=(x + inv_x, y + inv_y))
@@ -196,6 +196,7 @@ class JungingEnv:
                 3. static icons and background surface '''
         self.cursor = Cursor()
         self.group = ItemGroup()
+        self.inv = ItemGroup()
 
         # static images
         self.groups_static = pygame.sprite.Group()
@@ -223,7 +224,6 @@ class JungingEnv:
 
         if action['drag']:
             print(f'x: {self.cursor.pos.x}, y: {self.cursor.pos.y}')
-            
 
         # cursor hove on grids
         if action['drag'] and num != None and 0 < num < 16:
@@ -284,25 +284,38 @@ class JungingEnv:
                 self.group.group[idx] = self.group.dragged
                 self.group.dragged = Item(item_name)
 
-            # case04, not dragged, hover on empty table
-            # do nothing
-
-            pass
+        elif action['drag'] and num != None and 16 < num < 26:
+            # case01: dragged, put in empty invtory
+            pos = self.inv.find_pos(num)
+            if self.group.dragged != None and pos < 0:
+                print('case16')
+                dragged = self.group.dragged
+                dragged.update_pos(num)
+                self.inv.group.append(dragged)
+                self.group.dragged = None
+            elif self.group.dragged == None and pos >= 0:
+                self.group.dragged = self.inv.group.pop(pos)
+            
+            # case02: 
+                pass
 
         # synthesize
-        elif action['drag'] and num == 16:
+        elif action['drag'] and num == 16 and self.group.dragged == None:
             ''' check synthe, show new item '''
             syn_name = self.group.check_syn()
             if syn_name != None:
                 self.group.synthe = Item(syn_name, 0)
             pass
-
-        elif action['drag'] and num == 0:
+        
+        # drag up the result item
+        elif action['drag'] and num == 0 and self.group.dragged == None:
             ''' clear result and table '''
             self.group.group = []
             if self.group.synthe != None:
                 self.group.dragged = self.group.synthe
             self.group.synthe = None
+
+        
 
         if self.group.dragged != None:
             self.group.dragged.update_rect(
@@ -319,6 +332,8 @@ class JungingEnv:
             screen.blit(entity.surf, entity.rect)
         
         for entity in self.group.group:
+            screen.blit(entity.surf, entity.rect)
+        for entity in self.inv.group:
             screen.blit(entity.surf, entity.rect)
         syned = self.group.synthe
         if syned != None:

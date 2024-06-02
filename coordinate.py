@@ -30,15 +30,15 @@ recipes = {
         'plan': [['iron_ore', 0]],
         'additions': [i for i in range(9)],
     },
-    'red_stick': {
+    'stick-red': {
         'plan': [['wooden', 0], ['wooden', 3], ['red_dye', 4]],
         'additions': [0, 1, 3, 4],
     },
-    'green_stick': {
+    'stick-green': {
         'plan': [['wooden', 0], ['wooden', 3], ['green_dye', 4]],
         'additions': [0, 1, 3, 4],
     },
-    'blue_stick': {
+    'stick-blue': {
         'plan': [['wooden', 0], ['wooden', 3], ['blue_dye', 4]],
         'additions': [0, 1, 3, 4],
     },
