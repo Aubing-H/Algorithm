@@ -34,7 +34,7 @@ HEIGHT, WIDTH = INV_HEIGHT + 150, INV_WIDTH + 150
 CURSOR_HEIGHT, CURSOR_WIDTH = 20, 12
 # drag parameters
 ACC, FRIC = 1.0, -0.24  # ACC, FRIC = 0.5, -0.12
-FPS = 20
+FPS = 50
 
 ''' left top point of inventory image '''
 inv_x, inv_y = (WIDTH - INV_WIDTH) // 2, (HEIGHT - INV_HEIGHT) // 2
@@ -300,6 +300,8 @@ class JungingEnv:
         elif action['drag'] and num == 0:
             ''' clear result and table '''
             self.group.group = []
+            if self.group.synthe != None:
+                self.group.dragged = self.group.synthe
             self.group.synthe = None
 
         if self.group.dragged != None:
@@ -318,13 +320,12 @@ class JungingEnv:
         
         for entity in self.group.group:
             screen.blit(entity.surf, entity.rect)
-            
-        dragged = self.group.dragged
-        if dragged != None:
-            screen.blit(dragged.surf, dragged.rect) 
         syned = self.group.synthe
         if syned != None:
-            screen.blit(syned.surf, syned.rect)        
+            screen.blit(syned.surf, syned.rect)     
+        dragged = self.group.dragged
+        if dragged != None:
+            screen.blit(dragged.surf, dragged.rect)    
         screen.blit(self.cursor.surf, self.cursor.rect)
         pygame.display.update()
         
@@ -362,4 +363,4 @@ if __name__ == '__main__':
 
     model = UserModel()
     model.interact()
-    model.save_video('test0516.mp4')
+    # model.save_video('test0516.mp4')

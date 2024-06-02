@@ -1,5 +1,5 @@
 
-INV_WIDTH, INV_HEIGHT = 352, 216
+INV_WIDTH, INV_HEIGHT = 352, 249
 GRID_WIDTH, GRID_HEIGHT = 36, 36
 
 grid_info = {
@@ -8,7 +8,7 @@ grid_info = {
     'inv-3': (17, 9, (1, 9), (14, 166), (338, 202)),
     'craft': (1, 9, (3, 3), (58, 32), (166, 140)),  # 3x3 x 36x36
     'resul': (0, 1, (1, 1), (246, 68), (282, 104)),  # 238,60 290,112 52x52
-    'button': {16, 1, (1, 1), (231, 121), (298, 143)}   
+    'button': {16, 1, (1, 1), (231, 121), (298, 143)}, 
 }
 
 pattern2name = {
@@ -60,12 +60,12 @@ for color in ['red', 'green', 'blue']:
         }
 
 itemname2gridnum = {
-    'wooden': 10,
-    'iron': 11,
-    'diamond': 12,
-    'stick-red': 13,
-    'stick-green': 14,
-    'stick-blue': 15,
+    'log': 10,
+    'iron_ore': 11,
+    'diamond_ore': 12,
+    'red_dye': 13,
+    'green_dye': 14,
+    'blue_dye': 15,
 }
 
 ''' position -> grid number '''
