@@ -185,6 +185,12 @@ class ItemGroup:
         # ''' check material '''
         cftable = {item.grid_num - 1: item.item_name for item in self.group}
         return is_synthesizable(recipes, cftable)
+    
+    def exist_item(self, item_name):
+        for i, item in enumerate(self.group):
+            if item.item_name == item_name:
+                return True      
+        return False
 
 
 class JungingEnv:
@@ -205,6 +211,21 @@ class JungingEnv:
             sp = Item(item_name)
             self.groups_static.add(sp)
         pass
+
+        self.timestep = 0
+        self.task = None
+
+    def set_task(self, task_name, timelimit):
+        self.task = (task_name, timelimit)
+
+    def check_task(self):
+        if self.task == None:
+            return False, ''
+        if self.inv.exist_item(self.task[0]):
+            return True, 'finish'
+        if self.timestep > self.task[1] * FPS:
+            return True, 'timeout'
+        return False, ''
 
     def reset(self, ):
         
@@ -315,18 +336,18 @@ class JungingEnv:
                 self.group.dragged = self.group.synthe
             self.group.synthe = None
 
-        
-
         if self.group.dragged != None:
             self.group.dragged.update_rect(
                 self.cursor.pos.x,
                 self.cursor.pos.y
             )
+        self.timestep += 1
         self.render()
         rgb = pygame.surfarray.array3d(screen)
         return rgb.swapaxes(1, 0)
 
-    def render(self, ):
+    def render(self):
+
         screen.fill((168, 168, 168))
         for entity in self.groups_static:
             screen.blit(entity.surf, entity.rect)
@@ -342,6 +363,23 @@ class JungingEnv:
         if dragged != None:
             screen.blit(dragged.surf, dragged.rect)    
         screen.blit(self.cursor.surf, self.cursor.rect)
+
+        # add task info
+        if self.task != None:
+            task_name = self.task[0]
+            goal_font = pygame.font.SysFont('Comic Sans MS', 30)
+            text = goal_font.render('Goal:', 1, (255, 255, 255))
+            screen.blit(text, (20, 20))
+            icon = Item(task_name)
+            icon.update_rect(110, 40)
+            screen.blit(icon.surf, icon.rect)
+
+        if self.task != None and self.task[1] > 0:
+            timelimit = self.task[1]
+            time_font = pygame.font.SysFont('Comic Sans MS', 30)
+            text = time_font.render(f'Time: {self.timestep // FPS}/{timelimit}', 1, (255, 255, 255))
+            screen.blit(text, (200, 20))
+
         pygame.display.update()
         
 
@@ -353,6 +391,9 @@ class UserModel:
         self.frames = []
         pass
 
+    def set_task(self, task_name, timelimit):
+        self.env.set_task(task_name, timelimit)
+
     def interact(self, ):
 
         while True:
@@ -362,12 +403,28 @@ class UserModel:
                     pygame.quit()
                     qt = True
                     break
+                elif event.type == pygame.KEYUP:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        qt = True
+                        break
             if qt:
                 break
             action = self.holder.get_action()
-            rgb = self.env.step(action)       
+            rgb = self.env.step(action)
+
+            state = self.env.check_task()
+            
             self.frames.append(rgb)
             FramePerSecond.tick(FPS)
+
+            if state[0]:
+                if state[1] == 'finish':
+                    print(f'Task finished with {self.env.timestep // FPS} seconds.')
+                else:
+                    print('Time out.')
+                pygame.quit()
+                break
             
     def save_video(self, name):
         video_path = f'{dir_ego}/outputs/{name}'
@@ -377,5 +434,6 @@ class UserModel:
 if __name__ == '__main__':
 
     model = UserModel()
+    model.set_task('red_diamond_hoe', 60)
     model.interact()
-    # model.save_video('test0516.mp4')
+    model.save_video('test0611-red_diamond_hoe_60-v01.mp4')
