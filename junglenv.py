@@ -1,6 +1,7 @@
 import sys
 import string
 import random
+import json
 
 import pygame
 from pygame.locals import *
@@ -34,7 +35,7 @@ HEIGHT, WIDTH = INV_HEIGHT + 150, INV_WIDTH + 150
 CURSOR_HEIGHT, CURSOR_WIDTH = 20, 12
 # drag parameters
 ACC, FRIC = 1.0, -0.24  # ACC, FRIC = 0.5, -0.12
-FPS = 50
+FPS = 40
 
 ''' left top point of inventory image '''
 inv_x, inv_y = (WIDTH - INV_WIDTH) // 2, (HEIGHT - INV_HEIGHT) // 2
@@ -52,15 +53,15 @@ cursor_rect = cursor_image.get_rect()
 class ActionHolder:
 
     def __init__(self):
-        self.store_key = {K_p: False}
+        self.store_key = {K_LSHIFT: False}
         pass
 
     def get_action(self, fmt='dict'):
         action = {'accx': 0, 'accy': 0, 'drag': 0}
         pressed_key = pygame.key.get_pressed()
         # action-drag
-        if pressed_key[K_p]:
-            if not self.store_key[K_p]:
+        if pressed_key[K_LSHIFT]:
+            if not self.store_key[K_LSHIFT]:
                 ''' jump True '''
                 action['drag'] = 1
         # action-accx
@@ -74,7 +75,7 @@ class ActionHolder:
         elif not pressed_key[K_UP] and pressed_key[K_DOWN]:
             action['accy'] = 1
         
-        self.store_key[K_p] = True if pressed_key[K_p] else False
+        self.store_key[K_LSHIFT] = True if pressed_key[K_LSHIFT] else False
         if fmt == 'dict':
             return action
         elif fmt == 'list':
@@ -389,6 +390,8 @@ class UserModel:
         self.env = JungingEnv()
         self.holder = ActionHolder()  # listen user action
         self.frames = []
+        self.actions = []
+        self.finish = False
         pass
 
     def set_task(self, task_name, timelimit):
@@ -415,25 +418,40 @@ class UserModel:
 
             state = self.env.check_task()
             
+            self.actions.append(action)
             self.frames.append(rgb)
+            
             FramePerSecond.tick(FPS)
 
             if state[0]:
                 if state[1] == 'finish':
                     print(f'Task finished with {self.env.timestep // FPS} seconds.')
+                    self.finish = True
                 else:
                     print('Time out.')
                 pygame.quit()
                 break
             
     def save_video(self, name):
-        video_path = f'{dir_ego}/outputs/{name}'
-        write_video(self.frames, video_path, (WIDTH, HEIGHT), FPS * 2)
+        name = f'{name}-done' if self.finish else name
+        video_path = f'{dir_ego}/outputs/{name}.mp4'
+        write_video(self.frames, video_path, (WIDTH, HEIGHT), FPS)
+
+        action_path = f'{dir_ego}/outputs/{name}.json'
+        with open(action_path, 'w') as f:
+            json.dump(self.actions, f)
+
+
+def get_rand_task():
+    color = random.choice(['red', 'green', 'blue'])
+    material = random.choice(['diamond', 'iron', 'wooden'])
+    shape = random.choice(['axe', 'hoe', 'sword'])
+    return f'{color}_{material}_{shape}'
 
 
 if __name__ == '__main__':
 
     model = UserModel()
-    model.set_task('red_diamond_hoe', 60)
+    model.set_task('blue_wooden_sword', 60)
     model.interact()
-    model.save_video('test0611-red_diamond_hoe_60-v01.mp4')
+    model.save_video('record0611-blue_wooden_sword-v01')
