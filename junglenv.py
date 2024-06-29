@@ -327,6 +327,7 @@ class JungingEnv:
             syn_name = self.group.check_syn()
             if syn_name != None:
                 self.group.synthe = Item(syn_name, 0)
+                print('Synthesize items.')
             pass
         
         # drag up the result item
@@ -449,9 +450,28 @@ def get_rand_task():
     return f'{color}_{material}_{shape}'
 
 
+def input_task():
+    x = input('Input task name ( [color]_[material]_[shape] ):\n')
+    timelimit = input('Input time limit:')
+    timelimit = int(timelimit)
+    color, material, shape = x.split('_')
+    assert (
+        color in ['red', 'green', 'blue']
+        and material in ['diamond', 'iron', 'wooden']
+        and shape in ['axe', 'hoe', 'sword']
+    ), 'input task error, check input name'
+    return x, timelimit
+
+
 if __name__ == '__main__':
 
+    import time
+
+    timestr = time.strftime('%m%d%H%M%S', time.localtime())
+
+    task_name, timelimit = input_task()
+    
     model = UserModel()
-    model.set_task('blue_wooden_sword', 60)
+    model.set_task(task_name, timelimit)
     model.interact()
-    model.save_video('record0611-blue_wooden_sword-v01')
+    model.save_video(f'record{timestr}-{task_name}-v01')
